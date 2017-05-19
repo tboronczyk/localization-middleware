@@ -1,5 +1,7 @@
 # Slim 3 Localization Middleware
 
+[![Build Status](https://travis-ci.org/tboronczyk/localization-middleware.svg?branch=master)](https://travis-ci.org/tboronczyk/localization-middleware) [![codecov](https://codecov.io/gh/tboronczyk/localization-middleware/branch/master/graph/badge.svg)](https://codecov.io/gh/tboronczyk/localization-middleware)
+
 Slim 3 middleware to assist primarily with language-based content negotiation
 and various other localization tasks.
 
