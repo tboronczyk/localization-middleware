@@ -14,6 +14,8 @@ class LocalizationMiddleware
 {
     protected $availableLocales;
     protected $defaultLocale;
+    protected $textDomain;
+    protected $directory;
     protected $paramName;
     protected $cookieName;
     protected $cookieExpire;
@@ -26,9 +28,27 @@ class LocalizationMiddleware
     {
         $this->setAvailableLocales($locales);
         $this->setDefaultLocale($default);
+        $this->setTextDomain('messages');
+        $this->setDirectory('Locale');
         $this->setParamName('locale');
         $this->setCookieName('locale');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
+    }
+
+    /**
+     * @param string $domain the text domain
+     */
+    public function setTextDomain(string $domain)
+    {
+        $this->textDomain = $domain;
+    }
+
+    /**
+     * @param string $directory the locale directory 
+     */
+    public function setDirectory(string $directory)
+    {
+        $this->directory = $directory;
     }
 
     /**
@@ -75,13 +95,18 @@ class LocalizationMiddleware
     }
 
     /**
-     * Add the locale to the request and response objects.
+     * Add the locale to the environment, request and response objects.
      */
     public function __invoke(Request $req, Response $resp, callable $next)
     {
         $locale = $this->getLocale($req);
-        $req = $req->withAttribute('locale', $locale);
 
+        putenv("LANG=$locale");
+        setlocale(LC_ALL, $locale);
+        bindtextdomain($this->textDomain, $this->directory);
+        bind_textdomain_codeset($this->textDomain, 'UTF-8');
+
+        $req = $req->withAttribute('locale', $locale);
         $resp = $resp->withHeader(
             'Set-Cookie',
             "{$this->cookieName}=$locale; Expires={$this->cookieExpire}"
@@ -180,9 +205,9 @@ class LocalizationMiddleware
         // Locale format: language[_territory[.encoding[@modifier]]]
         //
         // Language and territory should be separated by an underscore
-        // although sometimes a hyphen is used. The language code should 
-        // be lowercase. Territory should be uppercase. Take this into 
-        // account but normalize the returned string as lowercase, 
+        // although sometimes a hyphen is used. The language code should
+        // be lowercase. Territory should be uppercase. Take this into
+        // account but normalize the returned string as lowercase,
         // underscore, uppercase.
         //
         // The possible codeset and modifier is discarded since the header
@@ -217,7 +242,7 @@ class LocalizationMiddleware
 
     protected function sort(array $a, array $b): int
     {
-        // Sort order is determined first by quality (higher values are 
+        // Sort order is determined first by quality (higher values are
         // placed first) then by order of their apperance in the header.
         if ($a['quality'] < $b['quality']) {
             return 1;

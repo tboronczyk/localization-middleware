@@ -99,4 +99,14 @@ class LocalizationMiddlewareTest extends TestCase
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('en_US', $req->getAttribute('locale'));
     }
+
+    public function testLocaleSetToEnv()
+    {
+        $req = self::createRequest(['QUERY_STRING' => 'locale=es_MX']);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->__invoke($req, $resp, self::callable());
+
+        $this->assertEquals('es_MX', getenv('LANG'));
+    }
 }
