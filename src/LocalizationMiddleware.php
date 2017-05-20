@@ -105,6 +105,7 @@ class LocalizationMiddleware
         setlocale(LC_ALL, $locale);
         bindtextdomain($this->textDomain, $this->directory);
         bind_textdomain_codeset($this->textDomain, 'UTF-8');
+        textdomain($this->textDomain);
 
         $req = $req->withAttribute('locale', $locale);
         $resp = $resp->withHeader(
