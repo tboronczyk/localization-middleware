@@ -76,7 +76,7 @@ methods:
   * `registerGettext(bool $bool)`  
     Sets whether to automatically set up the locale for use with gettext.
     When set, the locale is set to the `LANG` environment variable and the
-    `LC_ALL` catalog. The default value is `false`.
+    `LC_ALL` catalog. The default value is `false`.
 
         $middleware->registerGettext(true);
         
