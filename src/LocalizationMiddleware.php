@@ -8,7 +8,7 @@ use \Slim\Http\Response;
 
 /**
  * Middleware to assist primarily with language-based content negotiation
- * and various other localization tasks.
+ * and various other localization tasks
  */
 class LocalizationMiddleware
 {
@@ -18,14 +18,17 @@ class LocalizationMiddleware
 
     protected $availableLocales;
     protected $defaultLocale;
-    protected $gettext;
-    protected $textDomain;
-    protected $directory;
+
+    protected $searchOrder;
+
     protected $uriParamName;
     protected $reqAttrName;
     protected $cookieName;
     protected $cookieExpire;
-    protected $searchOrder;
+
+    protected $gettext;
+    protected $textDomain;
+    protected $directory;
 
     /**
      * @param array $locales a list of available locales
@@ -35,40 +38,16 @@ class LocalizationMiddleware
     {
         $this->setAvailableLocales($locales);
         $this->setDefaultLocale($default);
-        $this->setTextDomain('messages');
-        $this->setDirectory('Locale');
+        $this->setSearchOrder(
+            [self::FROM_URI_PARAM, self::FROM_COOKIE, self::FROM_HEADER]
+        );
         $this->setUriParamName('locale');
         $this->setReqAttrName('locale');
         $this->setCookieName('locale');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
         $this->registerGettext(false);
-        $this->setSearchOrder(
-            [self::FROM_URI_PARAM, self::FROM_COOKIE, self::FROM_HEADER]
-        );
-    }
-
-    /**
-     * @param string $domain the text domain for gettext.
-     */
-    public function setTextDomain(string $domain)
-    {
-        $this->textDomain = $domain;
-    }
-
-    /**
-     * @param string $directory the locale directory for gettext.
-     */
-    public function setDirectory(string $directory)
-    {
-        $this->directory = $directory;
-    }
-
-    /**
-     * @param string $default the default locale
-     */
-    public function setDefaultLocale(string $default)
-    {
-        $this->defaultLocale = $default;
+        $this->setTextDomain('messages');
+        $this->setDirectory('Locale');
     }
 
     /**
@@ -80,6 +59,23 @@ class LocalizationMiddleware
         foreach ($locales as $locale) {
             $this->availableLocales[] = $this->parseLocale($locale);
         }
+    }
+
+    /**
+     * @param string $default the default locale
+     */
+    public function setDefaultLocale(string $default)
+    {
+        $this->defaultLocale = $default;
+    }
+
+    /*
+     * @param array $order the order in which the search will be performed to
+     *        resolve the locale
+     */
+    public function setSearchOrder(array $order)
+    {
+        $this->searchOrder = $order;
     }
 
     /*
@@ -115,32 +111,44 @@ class LocalizationMiddleware
     }
 
     /**
-     * @param bool $bool automatically setup the locale for use with gettext.
+     * @param bool $bool whether to automatically setup the locale for use with
+     *        gettext
      */
     public function registerGettext(bool $bool)
     {
         $this->gettext = $bool;
     }
 
-    public function setSearchOrder(array $order)
+    /**
+     * @param string $domain the text domain for gettext
+     */
+    public function setTextDomain(string $domain)
     {
-        $this->searchOrder = $order;
+        $this->textDomain = $domain;
     }
 
     /**
-     * Add the locale to the environment, request and response objects.
+     * @param string $directory the locale directory for gettext
+     */
+    public function setDirectory(string $directory)
+    {
+        $this->directory = $directory;
+    }
+
+    /**
+     * Add the locale to the environment, request and response objects
      */
     public function __invoke(Request $req, Response $resp, callable $next)
     {
         $locale = $this->getLocale($req);
 
-         if ($this->gettext) {
-             putenv("LANG=$locale");
-             setlocale(LC_ALL, $locale);
-             bindtextdomain($this->textDomain, $this->directory);
-             bind_textdomain_codeset($this->textDomain, 'UTF-8');
-             textdomain($this->textDomain);
-         }
+        if ($this->gettext) {
+            putenv("LANG=$locale");
+            setlocale(LC_ALL, $locale);
+            bindtextdomain($this->textDomain, $this->directory);
+            bind_textdomain_codeset($this->textDomain, 'UTF-8');
+            textdomain($this->textDomain);
+        }
 
         $req = $req->withAttribute($this->reqAttrName, $locale);
         $resp = $resp->withHeader(
