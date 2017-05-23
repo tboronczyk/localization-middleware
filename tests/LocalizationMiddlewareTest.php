@@ -105,8 +105,31 @@ class LocalizationMiddlewareTest extends TestCase
         $req = self::createRequest(['QUERY_STRING' => 'locale=es_MX']);
         $resp = self::createResponse();
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->__invoke($req, $resp, self::callable());
+        $lmw->registerGettext(true);
 
+        $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('es_MX', getenv('LANG'));
+    }
+
+    public function testUriParamName()
+    {
+        $req = self::createRequest(['QUERY_STRING' => 'lang=es_MX']);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setUriParamName('lang');
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('es_MX', $req->getAttribute('locale'));
+    }
+
+    public function testReqAttrName()
+    {
+        $req = self::createRequest(['QUERY_STRING' => 'locale=es_MX']);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setReqAttrName('lang');
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('es_MX', $req->getAttribute('lang'));
     }
 }

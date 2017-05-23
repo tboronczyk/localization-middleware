@@ -14,9 +14,11 @@ class LocalizationMiddleware
 {
     protected $availableLocales;
     protected $defaultLocale;
+    protected $gettext;
     protected $textDomain;
     protected $directory;
-    protected $paramName;
+    protected $uriParamName;
+    protected $reqAttrName;
     protected $cookieName;
     protected $cookieExpire;
 
@@ -30,13 +32,15 @@ class LocalizationMiddleware
         $this->setDefaultLocale($default);
         $this->setTextDomain('messages');
         $this->setDirectory('Locale');
-        $this->setParamName('locale');
+        $this->setUriParamName('locale');
+        $this->setReqAttrName('locale');
         $this->setCookieName('locale');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
+        $this->registerGettext(false);
     }
 
     /**
-     * @param string $domain the text domain
+     * @param string $domain the text domain for gettext.
      */
     public function setTextDomain(string $domain)
     {
@@ -44,7 +48,7 @@ class LocalizationMiddleware
     }
 
     /**
-     * @param string $directory the locale directory 
+     * @param string $directory the locale directory for gettext.
      */
     public function setDirectory(string $directory)
     {
@@ -70,12 +74,20 @@ class LocalizationMiddleware
         }
     }
 
-    /**
+    /*
      * @param string $name the name for the locale URI parameter
      */
-    public function setParamName(string $name)
+    public function setUriParamName(string $name)
     {
-        $this->paramName = $name;
+        $this->uriParamName = $name;
+    }
+
+    /*
+     * @param string $name the name for the attribute attached to the request
+     */
+    public function setReqAttrName(string $name)
+    {
+        $this->reqAttrName = $name;
     }
 
     /**
@@ -95,19 +107,29 @@ class LocalizationMiddleware
     }
 
     /**
+     * @param bool $bool automatically setup the locale for use with gettext.
+     */
+    public function registerGettext(bool $bool)
+    {
+        $this->gettext = $bool;
+    }
+
+    /**
      * Add the locale to the environment, request and response objects.
      */
     public function __invoke(Request $req, Response $resp, callable $next)
     {
         $locale = $this->getLocale($req);
 
-        putenv("LANG=$locale");
-        setlocale(LC_ALL, $locale);
-        bindtextdomain($this->textDomain, $this->directory);
-        bind_textdomain_codeset($this->textDomain, 'UTF-8');
-        textdomain($this->textDomain);
+         if ($this->gettext) {
+             putenv("LANG=$locale");
+             setlocale(LC_ALL, $locale);
+             bindtextdomain($this->textDomain, $this->directory);
+             bind_textdomain_codeset($this->textDomain, 'UTF-8');
+             textdomain($this->textDomain);
+         }
 
-        $req = $req->withAttribute('locale', $locale);
+        $req = $req->withAttribute($this->reqAttrName, $locale);
         $resp = $resp->withHeader(
             'Set-Cookie',
             "{$this->cookieName}=$locale; Expires={$this->cookieExpire}"
@@ -144,7 +166,7 @@ class LocalizationMiddleware
 
     protected function localeFromParam(Request $req): string
     {
-        $value = $req->getQueryParam($this->paramName, '');
+        $value = $req->getQueryParam($this->uriParamName, '');
         $value = $this->filterLocale($value);
         return $value;
     }
