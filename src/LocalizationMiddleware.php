@@ -12,6 +12,10 @@ use \Slim\Http\Response;
  */
 class LocalizationMiddleware
 {
+    const FROM_URI_PARAM = 1;
+    const FROM_COOKIE = 2;
+    const FROM_HEADER = 3;
+
     protected $availableLocales;
     protected $defaultLocale;
     protected $gettext;
@@ -21,6 +25,7 @@ class LocalizationMiddleware
     protected $reqAttrName;
     protected $cookieName;
     protected $cookieExpire;
+    protected $searchOrder;
 
     /**
      * @param array $locales a list of available locales
@@ -37,6 +42,9 @@ class LocalizationMiddleware
         $this->setCookieName('locale');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
         $this->registerGettext(false);
+        $this->setSearchOrder(
+            [self::FROM_URI_PARAM, self::FROM_COOKIE, self::FROM_HEADER]
+        );
     }
 
     /**
@@ -114,6 +122,11 @@ class LocalizationMiddleware
         $this->gettext = $bool;
     }
 
+    public function setSearchOrder(array $order)
+    {
+        $this->searchOrder = $order;
+    }
+
     /**
      * Add the locale to the environment, request and response objects.
      */
@@ -140,27 +153,27 @@ class LocalizationMiddleware
 
     protected function getLocale(Request $req)
     {
-        // If a suitable locale is identified in the URI parameters, use that
-        // locale.
-        $locale = $this->localeFromParam($req);
-        if (!empty($locale)) {
-            return $locale;
-        }
+        foreach ($this->searchOrder as $order) {
+            switch ($order) {
+                case self::FROM_URI_PARAM:
+                    $locale = $this->localeFromParam($req);
+                    break;
 
-        // Otherwise, use the locale returned via cookie.
-        $locale = $this->localeFromCookie($req);
-        if (!empty($locale)) {
-            return $locale;
-        }
+                case self::FROM_COOKIE:
+                    $locale = $this->localeFromCookie($req);
+                    break;
 
-        // Otherwise, search the value of the Accept-Language header for a
-        // suitable locale.
-        $locale = $this->localeFromHeader($req);
-        if (!empty($locale)) {
-            return $locale;
-        }
+                case self::FROM_HEADER:
+                    $locale = $this->localeFromHeader($req);
+                    break;
 
-        // Use the default locale if a viable candidate is still not found.
+                default:
+                    $locale = '';
+            }
+            if (!empty($locale)) {
+                return $locale;
+            }
+        }
         return $this->defaultLocale;
     }
 

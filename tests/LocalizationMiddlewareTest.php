@@ -132,4 +132,23 @@ class LocalizationMiddlewareTest extends TestCase
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('es_MX', $req->getAttribute('lang'));
     }
+
+    public function testSearchOrder()
+    {
+        $env = [
+            'QUERY_STRING' => 'locale=es_MX',
+            'HTTP_ACCEPT_LANGUAGE' => 'fr_CA'
+        ];
+        $req = self::createRequest($env);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([
+            LocalizationMiddleware::FROM_HEADER,
+            LocalizationMiddleware::FROM_URI_PARAM,
+            LocalizationMiddleware::FROM_COOKIE
+        ]);
+         
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+    }
 }
