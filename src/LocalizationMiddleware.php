@@ -111,7 +111,7 @@ class LocalizationMiddleware
     }
 
     /**
-     * @param bool $bool whether to automatically setup the locale for use with
+     * @param bool $bool whether to automatically set up the locale for use with
      *        gettext
      */
     public function registerGettext(bool $bool)
