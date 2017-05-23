@@ -21,8 +21,8 @@ class LocalizationMiddleware
 
     protected $searchOrder;
 
-    protected $uriParamName;
     protected $reqAttrName;
+    protected $uriParamName;
     protected $cookieName;
     protected $cookieExpire;
 
@@ -41,8 +41,8 @@ class LocalizationMiddleware
         $this->setSearchOrder(
             [self::FROM_URI_PARAM, self::FROM_COOKIE, self::FROM_HEADER]
         );
-        $this->setUriParamName('locale');
         $this->setReqAttrName('locale');
+        $this->setUriParamName('locale');
         $this->setCookieName('locale');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
         $this->registerGettext(false);
@@ -79,19 +79,19 @@ class LocalizationMiddleware
     }
 
     /*
-     * @param string $name the name for the locale URI parameter
-     */
-    public function setUriParamName(string $name)
-    {
-        $this->uriParamName = $name;
-    }
-
-    /*
      * @param string $name the name for the attribute attached to the request
      */
     public function setReqAttrName(string $name)
     {
         $this->reqAttrName = $name;
+    }
+
+    /*
+     * @param string $name the name for the locale URI parameter
+     */
+    public function setUriParamName(string $name)
+    {
+        $this->uriParamName = $name;
     }
 
     /**
