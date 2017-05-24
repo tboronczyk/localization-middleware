@@ -90,6 +90,16 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals('eo', $req->getAttribute('locale'));
     }
 
+    public function testLocaleFromHeaderEqualQuality()
+    {
+        $req = self::createRequest(['HTTP_ACCEPT_LANGUAGE' => 'de_DE;q=0.5,eo_XX;q=0.5']);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('eo', $req->getAttribute('locale'));
+    }
+
     public function testLocaleFromDefault()
     {
         $env = [
