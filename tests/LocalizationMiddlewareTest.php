@@ -149,6 +149,45 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals('es_MX', $req->getAttribute('locale'));
     }
 
+    public function testLocaleFromHeaderQualitySorted()
+    {
+        $req = self::createRequest([
+            'HTTP_ACCEPT_LANGUAGE' => 'fr_CA;q=0.7,en_US;q=0.2,es_MX;q=0.8'
+        ]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('es_MX', $req->getAttribute('locale'));
+    }
+
+    public function testLocaleFromHeaderQualitySame()
+    {
+        $req = self::createRequest([
+            'HTTP_ACCEPT_LANGUAGE' => 'fr_CA;q=0.8,es_MX;q=0.8'
+        ]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+    }
+
+    public function testLocaleLanguageDowngrade()
+    {
+        $req = self::createRequest([
+            'HTTP_ACCEPT_LANGUAGE' => 'en,eo_XX'
+        ]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
+         
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('eo', $req->getAttribute('locale'));
+    }
+
     public function testLocaleDefault()
     {
         $req = self::createRequest([
