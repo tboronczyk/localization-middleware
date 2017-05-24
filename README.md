@@ -68,6 +68,12 @@ methods:
 
         $middleware->setCookieName('lang');
 
+  * `setCookiePath(string $path)`  
+    Sets the path of the cookie for which it will be returned by the client.
+    The default path is `/`.
+
+        $middleware->setCookiePath("/dir");
+
   * `setCookieExpire(int $secs)`  
     Sets the duration of the locale cookie. The default value is 30 days.
 

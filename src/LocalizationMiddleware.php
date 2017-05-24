@@ -24,6 +24,7 @@ class LocalizationMiddleware
     protected $reqAttrName;
     protected $uriParamName;
     protected $cookieName;
+    protected $cookiePath;
     protected $cookieExpire;
 
     protected $gettext;
@@ -44,6 +45,7 @@ class LocalizationMiddleware
         $this->setReqAttrName('locale');
         $this->setUriParamName('locale');
         $this->setCookieName('locale');
+        $this->setCookiePath('/');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
         $this->registerGettext(false);
         $this->setTextDomain('messages');
@@ -103,6 +105,14 @@ class LocalizationMiddleware
     }
 
     /**
+     * @param string $path the locale cookie's path
+     */
+    public function setCookiePath(string $path)
+    {
+        $this->cookiePath = $path;
+    }
+
+    /**
      * @param int $secs cookie expiration in seconds from now
      */
     public function setCookieExpire(int $secs)
@@ -153,7 +163,7 @@ class LocalizationMiddleware
         $req = $req->withAttribute($this->reqAttrName, $locale);
         $resp = $resp->withHeader(
             'Set-Cookie',
-            "{$this->cookieName}=$locale; Expires={$this->cookieExpire}"
+            "{$this->cookieName}=$locale; Path={$this->cookiePath}; Expires={$this->cookieExpire}"
         );
 
         return $next($req, $resp);
