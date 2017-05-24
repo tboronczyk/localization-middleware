@@ -72,7 +72,7 @@ class LocalizationMiddleware
         $this->defaultLocale = $default;
     }
 
-    /*
+    /**
      * @param array $order the order in which the search will be performed to
      *        resolve the locale
      */
@@ -81,7 +81,7 @@ class LocalizationMiddleware
         $this->searchOrder = $order;
     }
 
-    /*
+    /**
      * @param string $name the name for the attribute attached to the request
      */
     public function setReqAttrName(string $name)
@@ -89,7 +89,7 @@ class LocalizationMiddleware
         $this->reqAttrName = $name;
     }
 
-    /*
+    /**
      * @param string $name the name for the locale URI parameter
      */
     public function setUriParamName(string $name)
