@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace Boronczyk;
 
-use \Slim\Http\Request;
-use \Slim\Http\Response;
+use Psr\Http\Message\ServerRequestInterface as Request; 
+use Psr\Http\Message\ResponseInterface as Response;
 
 /**
  * Middleware to assist primarily with language-based content negotiation
@@ -202,7 +202,8 @@ class LocalizationMiddleware
 
     protected function localeFromParam(Request $req): string
     {
-        $value = $req->getQueryParam($this->uriParamName, '');
+        $params = $req->getQueryParams();
+        $value = $params[$this->uriParamName] ?? '';
         return $this->filterLocale($value);
     }
 
@@ -214,7 +215,8 @@ class LocalizationMiddleware
 
     protected function localeFromCookie(Request $req): string
     {
-        $value = $req->getCookieParam($this->cookieName, '');
+        $cookies = $req->getCookieParams();
+        $value = $cookies[$this->cookieName] ?? '';
         return $this->filterLocale($value);
     }
 
