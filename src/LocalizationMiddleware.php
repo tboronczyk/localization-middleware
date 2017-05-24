@@ -191,7 +191,7 @@ class LocalizationMiddleware
                     break;
 
                 default:
-                    $locale = '';
+                    throw new \DomainException('Unknown search option provided');
             }
             if (!empty($locale)) {
                 return $locale;
@@ -203,22 +203,19 @@ class LocalizationMiddleware
     protected function localeFromParam(Request $req): string
     {
         $value = $req->getQueryParam($this->uriParamName, '');
-        $value = $this->filterLocale($value);
-        return $value;
+        return $this->filterLocale($value);
     }
 
     protected function localeFromPath(Request $req): string
     {
         list($_, $value) = explode('/', $req->getUri()->getPath());
-        $value = $this->filterLocale($value);
-        return $value;
+        return $this->filterLocale($value);
     }
 
     protected function localeFromCookie(Request $req): string
     {
         $value = $req->getCookieParam($this->cookieName, '');
-        $value = $this->filterLocale($value);
-        return $value;
+        return $this->filterLocale($value);
     }
 
     protected function localeFromHeader(Request $req): string

@@ -152,6 +152,17 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals('fr_CA', $req->getAttribute('locale'));
     }
 
+    public function testSearchOrderException()
+    {
+        $req = self::createRequest([]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([999]);
+         
+        $this->expectException('DomainException');
+        $lmw->__invoke($req, $resp, self::callable());
+    }
+
     public function testLocaleFromPath()
     {
         $env = [
