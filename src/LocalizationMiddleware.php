@@ -12,8 +12,8 @@ use Psr\Http\Message\ResponseInterface as Response;
  */
 class LocalizationMiddleware
 {
-    const FROM_URI_PARAM = 1;
-    const FROM_URI_PATH = 2;
+    const FROM_URI_PATH = 1;
+    const FROM_URI_PARAM = 2;
     const FROM_COOKIE = 3;
     const FROM_HEADER = 4;
 
@@ -41,7 +41,7 @@ class LocalizationMiddleware
         $this->setAvailableLocales($locales);
         $this->setDefaultLocale($default);
         $this->setSearchOrder(
-            [self::FROM_URI_PARAM, self::FROM_COOKIE, self::FROM_HEADER]
+            [self::FROM_URI_PATH, self::FROM_URI_PARAM, self::FROM_COOKIE, self::FROM_HEADER]
         );
         $this->setReqAttrName('locale');
         $this->setUriParamName('locale');
@@ -174,12 +174,12 @@ class LocalizationMiddleware
     {
         foreach ($this->searchOrder as $order) {
             switch ($order) {
-                case self::FROM_URI_PARAM:
-                    $locale = $this->localeFromParam($req);
-                    break;
-
                 case self::FROM_URI_PATH:
                     $locale = $this->localeFromPath($req);
+                    break;
+
+                case self::FROM_URI_PARAM:
+                    $locale = $this->localeFromParam($req);
                     break;
 
                 case self::FROM_COOKIE:
@@ -200,16 +200,16 @@ class LocalizationMiddleware
         return $this->defaultLocale;
     }
 
+    protected function localeFromPath(Request $req): string
+    {
+        list($_, $value) = explode('/', $req->getUri()->getPath());
+        return $this->filterLocale($value);
+    }
+
     protected function localeFromParam(Request $req): string
     {
         $params = $req->getQueryParams();
         $value = $params[$this->uriParamName] ?? '';
-        return $this->filterLocale($value);
-    }
-
-    protected function localeFromPath(Request $req): string
-    {
-        list($_, $value) = explode('/', $req->getUri()->getPath());
         return $this->filterLocale($value);
     }
 

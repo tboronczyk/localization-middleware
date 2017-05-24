@@ -27,7 +27,7 @@ methods:
     Sets the list of available locales after an instance has already been
     created.
 
-        $middleware->setAvailableLocales(['en_US', 'en_GB', 'pt_BR']);
+        $middleware->setAvailableLocales(['en_US', 'fr_CA', 'pt_BR']);
 
   * `setDefaultLocale(string $locale)`  
     Sets the default locale to return after an instance has already been
@@ -39,6 +39,7 @@ methods:
     Sets the order in which inputs are searched for a suitable locale.
 
         $middleware->setSearchOrder([
+            LocationMiddleware::FROM_URI_PATH,
             LocationMiddleware::FROM_URI_PARAM,
             LocationMiddleware::FROM_COOKIE,
             LocationMiddleware::FROM_HEADER
@@ -47,22 +48,22 @@ methods:
     Adding or removing locale sources from the order modifies the search
     domain.
 
-        // never search the Accept-Language header
+        // only search cookies and the Accept-Language header
         $middleware->setSearchOrder([
             LocationMiddleware::FROM_COOKIE,
-            LocationMiddleware::FROM_URI_PARAM
+            LocationMiddleware::FROM_HEADER
         ]);
 
     The available local source constants are:
-
-    * `LocationMiddleware::FROM_URI_PARAM`  
-      Search for the locale in the URI parameter (the default parameter name
-      is `locale`).
 
     * `LocationMiddleware::FROM_URI_PATH`  
       Search for the locale in the URI path. The first directory value in
       the request path is considered the locale, for example 
       `https://example.com/en_US/foo`.
+
+    * `LocationMiddleware::FROM_URI_PARAM`  
+      Search for the locale in the URI parameter (the default parameter name
+      is `locale`).
 
     * `LocationMiddleware::FROM_COOKIE`  
       Search for the locale in cookies (the default cookie name is `locale`).
@@ -72,9 +73,9 @@ methods:
       searches make a best-effort search for locales, languages, and possible
       quality modifiers.
 
-    The default order is: `FROM_URI_PARAM`, `FROM_COOKIE`, `FROM_HEADER`.
-    Note that `FROM_URI_PATH` is not enabled by default.
- 
+    The default order is: `FROM_URI_PATH`, `FROM_URI_PARAM`, `FROM_COOKIE`,
+    `FROM_HEADER`.
+
   * `setReqAttrName(string $name)`  
     Sets the name for the attribute attached to the request. The default name
     is `locale`.
@@ -92,7 +93,7 @@ methods:
 
         $middleware->setReqAttrName('lang');
 
-        https://example.com/mypage?lang=de_CH
+        https://example.com/mypage?lang=es_MX
 
   * `setCookieName(string $name)`  
     Sets the name of the cookie to store the determined locale. The default
