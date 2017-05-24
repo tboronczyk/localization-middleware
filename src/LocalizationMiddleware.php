@@ -13,8 +13,9 @@ use \Slim\Http\Response;
 class LocalizationMiddleware
 {
     const FROM_URI_PARAM = 1;
-    const FROM_COOKIE = 2;
-    const FROM_HEADER = 3;
+    const FROM_URI_PATH = 2;
+    const FROM_COOKIE = 3;
+    const FROM_HEADER = 4;
 
     protected $availableLocales;
     protected $defaultLocale;
@@ -177,6 +178,10 @@ class LocalizationMiddleware
                     $locale = $this->localeFromParam($req);
                     break;
 
+                case self::FROM_URI_PATH:
+                    $locale = $this->localeFromPath($req);
+                    break;
+
                 case self::FROM_COOKIE:
                     $locale = $this->localeFromCookie($req);
                     break;
@@ -198,6 +203,13 @@ class LocalizationMiddleware
     protected function localeFromParam(Request $req): string
     {
         $value = $req->getQueryParam($this->uriParamName, '');
+        $value = $this->filterLocale($value);
+        return $value;
+    }
+
+    protected function localeFromPath(Request $req): string
+    {
+        list($_, $value) = explode('/', $req->getUri()->getPath());
         $value = $this->filterLocale($value);
         return $value;
     }

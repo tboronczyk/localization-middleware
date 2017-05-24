@@ -151,4 +151,20 @@ class LocalizationMiddlewareTest extends TestCase
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('fr_CA', $req->getAttribute('locale'));
     }
+
+    public function testLocaleFromPath()
+    {
+        $env = [
+            'REQUEST_URI' => '/eo/foo/bar'
+        ];
+        $req = self::createRequest($env);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([
+            LocalizationMiddleware::FROM_URI_PATH
+        ]);
+         
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('eo', $req->getAttribute('locale'));
+    }
 }

@@ -36,14 +36,44 @@ methods:
 
   * `setSearchOrder(array $order)`  
     Sets the order in which inputs are searched for a suitable locale.
-    The default order is: `FROM_URI_PARAM`, `FROM_COOKIE`, `FROM_HEADER`.
 
         $middleware->setSearchOrder([
-            LocationMiddleware::FROM_COOKIE,
             LocationMiddleware::FROM_URI_PARAM,
+            LocationMiddleware::FROM_COOKIE,
             LocationMiddleware::FROM_HEADER
         ]);
 
+    Adding or removing locale sources from the order modifies the search
+    domain.
+
+        // never search the Accept-Language header
+        $middleware->setSearchOrder([
+            LocationMiddleware::FROM_COOKIE,
+            LocationMiddleware::FROM_URI_PARAM
+        ]);
+
+    The available local source constants are:
+
+    * `LocationMiddleware::FROM_URI_PARAM`  
+      Search for the locale in the URI parameter (the default parameter name
+      is `locale`).
+
+    * `LocationMiddleware::FROM_URI_PATH`  
+      Search for the locale in the URI path. The first directory value in
+      the request path is considered the locale, for example 
+      `https://example.com/en_US/foo`.
+
+    * `LocationMiddleware::FROM_COOKIE`  
+      Search for the locale in cookies (the default cookie name is `locale`).
+
+    * `LocationMiddleware::FROM_HEADER`  
+      Search for the local in the HTTP `Accept-Language` header. Header
+      searches make a best-effort search for locales, languages, and possible
+      quality modifiers.
+
+    The default order is: `FROM_URI_PARAM`, `FROM_COOKIE`, `FROM_HEADER`.
+    Note that `FROM_URI_PATH` is not enabled by default.
+ 
   * `setReqAttrName(string $name)`  
     Sets the name for the attribute attached to the request. The default name
     is `locale`.
