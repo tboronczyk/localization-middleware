@@ -33,7 +33,7 @@ methods:
     Sets the default locale to return after an instance has already been
     created.
 
-        $middleware->setDefaultLocale('en_GB');
+        $middleware->setDefaultLocale('fr_CA');
 
   * `setSearchOrder(array $order)`  
     Sets the order in which inputs are searched for a suitable locale.
