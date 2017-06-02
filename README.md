@@ -3,9 +3,13 @@
 [![Build Status](https://travis-ci.org/tboronczyk/localization-middleware.svg?branch=master)](https://travis-ci.org/tboronczyk/localization-middleware) [![codecov](https://codecov.io/gh/tboronczyk/localization-middleware/branch/master/graph/badge.svg)](https://codecov.io/gh/tboronczyk/localization-middleware)
 
 PSR-7 middleware to assist primarily with language-based content negotiation
-and various other localization tasks.
+and various other localization tasks. It determines the appropriate locale
+based on the client’s request and sets an attribute on the request object to
+make the value available to the rest of your application. It’s callback hook
+offers a convenient way to initialize other libraries or execute code based on
+the locale value.
 
-## Usage
+## Basic Example
 
     use Boronczyk\LocalizationMiddleware;
 
@@ -16,7 +20,41 @@ and various other localization tasks.
     $app->get('/', function ($req, $resp, $args) {
         $attrs = $req->getAttributes();
         $locale = $attrs['locale'];
+        return $resp->write("The locale is $locale.");
     });
+
+## More Advanced Example
+
+    use Boronczyk\LocalizationMiddleware;
+
+    $availableLocales = ['en_US', 'fr_CA', 'es_MX', 'eo'];
+    $defaultLocale = 'en_US';
+    $middleware = new LocalizationMiddleware($availableLocales, $defaultLocale);
+
+    $middleware->setSearchOrder([
+        LocationMiddleware::FROM_URI_PATH,
+        LocationMiddleware::FROM_URI_PARAM,
+        LocationMiddleware::FROM_COOKIE,
+        LocationMiddleware::FROM_HEADER
+    ]);
+    $middleware->setCallback(function (string $locale) {
+        putenv("LANG=$locale");
+        setlocale(LC_ALL, $locale);
+        bindtextdomain('messages', 'Locale');
+        bind_textdomain_codeset('messages', 'UTF-8');
+        textdomain('messages');
+    });
+    $middleware->setUriParamName('hl');
+
+    $app->add($middleware);
+
+    $app->get('/', function ($req, $resp, $args) {
+        $attrs = $req->getAttributes();
+        $locale = $attrs['locale'];
+        $text = sprintf(_('The locale is %s.'), $locale);
+        return $resp->write($text);
+    });
+
 
 ## Configurable Behavior
 
@@ -91,7 +129,7 @@ methods:
     Sets the name for a URI parameter to specify the locale. The default name
     is `locale`.
 
-        $middleware->setReqAttrName('lang');
+        $middleware->setUriParamName('lang');
 
         https://example.com/mypage?lang=es_MX
 
