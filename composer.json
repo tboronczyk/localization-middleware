@@ -19,9 +19,6 @@
     "phpunit/phpunit": "^6.0",
     "slim/slim": "^3.0"
   },
-  "suggest": {
-    "ext-gettext": "Needed if middleware  auto-registers the locale with gettext"
-  },
   "autoload": {
     "psr-4": { "Boronczyk\\": "src/" }
   }
