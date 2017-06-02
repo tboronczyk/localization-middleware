@@ -175,7 +175,7 @@ class LocalizationMiddleware
 
     protected function localeFromPath(Request $req): string
     {
-        list($_, $value) = explode('/', $req->getUri()->getPath());
+        list(, $value) = explode('/', $req->getUri()->getPath());
         return $this->filterLocale($value);
     }
 
@@ -274,7 +274,7 @@ class LocalizationMiddleware
     {
         // If no quality is given then return 0.00001 as a sufficiently
         // small value for sorting purposes.
-        @list($_, $value) = explode('=', $quality, 2);
+        @list(, $value) = explode('=', $quality, 2);
         return (float)($value ?: 0.0001);
     }
 
