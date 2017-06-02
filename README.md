@@ -115,31 +115,13 @@ methods:
   * `setCallback(callable $func)`  
     Sets a callback that is invoked after the middleware identifies the locale,
     offering the developer a chance to conveniently initialize other libraries 
-    with the value. The callable’s signature is: `function (string $locale)`.
+    or execute other code with the value. The callable’s signature is:
+    `function (string $locale)`.
 
         $middleware->setCallback(function (string $locale) {
-            error_log("The locale is: $locale");
+            putenv("LANG=$locale");
+            setlocale(LC_ALL, $locale);
+            bindtextdomain('messages', 'Locale');
+            bind_textdomain_codeset('messages', 'UTF-8');
+            textdomain('messages');
         });
-    
-  * `registerGettext(bool $bool)`  
-    Sets whether to automatically set up the locale for use with gettext.
-    When set, the locale is set to the `LANG` environment variable and the
-    `LC_ALL` catalog. The default value is `false`.
-
-        $middleware->registerGettext(true);
-        
-        $app->get('/', function ($req, $resp, $args) {
-            return $resp->write(_('Hello world'));
-        });
-
-  * `setTextDomain(string $domain)`  
-    Sets the text domain for gettext. The default value is `messages`.
-
-        $middleware->registerGettext(true);
-        $middleware->setTextDomain('errors');
-
-  * `setDirectory(string $directory)`  
-    Sets the locale directory for gettext. The default value is `Locale`.
-
-        $middleware->registerGettext(true);
-        $middleware->setDirectory('Locale');

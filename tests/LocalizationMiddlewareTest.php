@@ -226,22 +226,6 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals('en_US', $req->getAttribute('locale'));
     }
 
-    public function testLocaleGettext()
-    {
-        $curr = getenv('LANG');
-        $locale = ($curr == 'en_US') ? 'fr_CA' : 'en_US';
-
-        $req = self::createRequest([
-            'QUERY_STRING' => "locale=$locale"
-        ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->registerGettext(true);
-
-        $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals($locale, getenv('LANG'));
-    }
-
     public function testReqAttrName()
     {
         $req = self::createRequest([

@@ -29,9 +29,6 @@ class LocalizationMiddleware
     protected $cookieExpire;
 
     protected $callback;
-    protected $gettext;
-    protected $textDomain;
-    protected $directory;
 
     /**
      * @param array $locales a list of available locales
@@ -50,9 +47,6 @@ class LocalizationMiddleware
         $this->setCookiePath('/');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
         $this->setCallback(function () { });
-        $this->registerGettext(false);
-        $this->setTextDomain('messages');
-        $this->setDirectory('Locale');
     }
 
     /**
@@ -132,44 +126,11 @@ class LocalizationMiddleware
     }
 
     /**
-     * @param bool $bool whether to automatically set up the locale for use with
-     *        gettext
-     */
-    public function registerGettext(bool $bool)
-    {
-        $this->gettext = $bool;
-    }
-
-    /**
-     * @param string $domain the text domain for gettext
-     */
-    public function setTextDomain(string $domain)
-    {
-        $this->textDomain = $domain;
-    }
-
-    /**
-     * @param string $directory the locale directory for gettext
-     */
-    public function setDirectory(string $directory)
-    {
-        $this->directory = $directory;
-    }
-
-    /**
      * Add the locale to the environment, request and response objects
      */
     public function __invoke(Request $req, Response $resp, callable $next)
     {
         $locale = $this->getLocale($req);
-
-        if ($this->gettext) {
-            putenv("LANG=$locale");
-            setlocale(LC_ALL, $locale);
-            bindtextdomain($this->textDomain, $this->directory);
-            bind_textdomain_codeset($this->textDomain, 'UTF-8');
-            textdomain($this->textDomain);
-        }
 
         $this->callback->__invoke($locale);
 
