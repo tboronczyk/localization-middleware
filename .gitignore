@@ -1,4 +1,5 @@
 *.swp
 vendor
 tests/coverage.xml
+tests/log.xml
 .scannerwork
