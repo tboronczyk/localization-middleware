@@ -46,7 +46,7 @@ class LocalizationMiddleware
         $this->setCookieName('locale');
         $this->setCookiePath('/');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
-        $this->setCallback(function () { });
+        $this->setCallback(function () { /* empty function */ });
     }
 
     /**
