@@ -112,6 +112,15 @@ methods:
 
         $middleware->setCookieExpire(3600); // 1 hour
 
+  * `setCallback(callable $func)`  
+    Sets a callback that is invoked after the middleware identifies the locale,
+    offering the developer a chance to conveniently initialize other libraries 
+    with the value. The callable’s signature is: `function (string $locale)`.
+
+        $middleware->setCallback(function (string $locale) {
+            error_log("The locale is: $locale");
+        });
+    
   * `registerGettext(bool $bool)`  
     Sets whether to automatically set up the locale for use with gettext.
     When set, the locale is set to the `LANG` environment variable and the

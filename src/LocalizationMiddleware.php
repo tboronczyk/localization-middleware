@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace Boronczyk;
 
-use Psr\Http\Message\ServerRequestInterface as Request; 
+use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Message\ResponseInterface as Response;
 
 /**
@@ -28,6 +28,7 @@ class LocalizationMiddleware
     protected $cookiePath;
     protected $cookieExpire;
 
+    protected $callback;
     protected $gettext;
     protected $textDomain;
     protected $directory;
@@ -48,6 +49,7 @@ class LocalizationMiddleware
         $this->setCookieName('locale');
         $this->setCookiePath('/');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
+        $this->setCallback(function () { });
         $this->registerGettext(false);
         $this->setTextDomain('messages');
         $this->setDirectory('Locale');
@@ -122,6 +124,14 @@ class LocalizationMiddleware
     }
 
     /**
+     * @param callable $func callable to invoke when locale is determined
+     */
+    public function setCallback(callable $func)
+    {
+        $this->callback = $func;
+    }
+
+    /**
      * @param bool $bool whether to automatically set up the locale for use with
      *        gettext
      */
@@ -160,6 +170,8 @@ class LocalizationMiddleware
             bind_textdomain_codeset($this->textDomain, 'UTF-8');
             textdomain($this->textDomain);
         }
+
+        $this->callback->__invoke($locale);
 
         $req = $req->withAttribute($this->reqAttrName, $locale);
         $resp = $resp->withHeader(
