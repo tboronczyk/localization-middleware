@@ -5,7 +5,7 @@
 PSR-7 middleware to assist primarily with language-based content negotiation
 and various other localization tasks. It determines the appropriate locale
 based on the client’s request and sets an attribute on the request object to
-make the value available to the rest of your application. It’s callback hook
+make the value available to the rest of your application. Its callback hook
 offers a convenient way to initialize other libraries or execute code based on
 the locale value.
 
