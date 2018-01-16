@@ -272,10 +272,11 @@ class LocalizationMiddleware
 
     protected function parseQuality(string $quality): float
     {
-        // If no quality is given then return 0.00001 as a sufficiently
-        // small value for sorting purposes.
+        // If no quality is given then return 1 as this is the default quality
+        // defined in RFC 2616 HTTP/1.1 section 14.4 Accept-Language
+        // See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4
         @list(, $value) = explode('=', $quality, 2);
-        return (float)($value ?: 0.0001);
+        return (float)($value ?: 1.0);
     }
 
     protected function sort(array $a, array $b): int
