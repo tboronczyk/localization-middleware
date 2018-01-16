@@ -97,7 +97,7 @@ methods:
 
     * `LocationMiddleware::FROM_URI_PATH`  
       Search for the locale in the URI path. The first directory value in
-      the request path is considered the locale, for example 
+      the request path is considered the locale, for example
       `https://example.com/en_US/foo`.
 
     * `LocationMiddleware::FROM_URI_PARAM`  
@@ -151,9 +151,14 @@ methods:
 
         $middleware->setCookieExpire(3600); // 1 hour
 
+  * `setCookieEnabled(bool $enabled)`  
+    Enable the locale cookie. The default value is TRUE.
+
+        $middleware->setCookieEnabled(FALSE); // Disabled
+
   * `setCallback(callable $func)`  
     Sets a callback that is invoked after the middleware identifies the locale,
-    offering the developer a chance to conveniently initialize other libraries 
+    offering the developer a chance to conveniently initialize other libraries
     or execute other code with the value. The callable’s signature is:
     `function (string $locale)`.
 
