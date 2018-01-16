@@ -43,7 +43,7 @@ class LocalizationMiddlewareTest extends TestCase
         $resp = self::createResponse();
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
         $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PATH]);
-         
+
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('fr_CA', $req->getAttribute('locale'));
     }
@@ -136,7 +136,7 @@ class LocalizationMiddlewareTest extends TestCase
         $lmw->setCallback(function (string $locale) use (&$resolved) {
             $resolved = $locale;
         });
-         
+
         $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('fr_CA', $resolved);
     }
@@ -164,7 +164,7 @@ class LocalizationMiddlewareTest extends TestCase
         $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('es_MX', $req->getAttribute('locale'));
+        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
     }
 
     public function testLocaleFromHeaderQualitySorted()
@@ -178,6 +178,19 @@ class LocalizationMiddlewareTest extends TestCase
 
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('es_MX', $req->getAttribute('locale'));
+    }
+
+    public function testLocaleFromHeaderQualitySortedDefault()
+    {
+        $req = self::createRequest([
+            'HTTP_ACCEPT_LANGUAGE' => 'en_US;q=0.2,fr_CA,es_MX;q=0.8'
+        ]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
     }
 
     public function testLocaleFromHeaderQualitySame()
@@ -201,7 +214,7 @@ class LocalizationMiddlewareTest extends TestCase
         $resp = self::createResponse();
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
         $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
-         
+
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('eo', $req->getAttribute('locale'));
     }
@@ -253,7 +266,7 @@ class LocalizationMiddlewareTest extends TestCase
             LocalizationMiddleware::FROM_HEADER,
             LocalizationMiddleware::FROM_URI_PARAM
         ]);
-         
+
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertEquals('es_MX', $req->getAttribute('locale'));
     }
@@ -264,7 +277,7 @@ class LocalizationMiddlewareTest extends TestCase
         $resp = self::createResponse();
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
         $lmw->setSearchOrder([999]);
-         
+
         $this->expectException('DomainException');
         $lmw->__invoke($req, $resp, self::callable());
     }
