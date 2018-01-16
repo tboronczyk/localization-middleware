@@ -12,7 +12,7 @@ the locale value.
 
 ## Installation
 
-    `composer require boronczyk/localization-middleware`
+    composer require boronczyk/localization-middleware
 
 ## Basic Example
 
