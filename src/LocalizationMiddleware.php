@@ -27,6 +27,7 @@ class LocalizationMiddleware
     protected $cookieName;
     protected $cookiePath;
     protected $cookieExpire;
+    protected $cookieEnabled;
 
     protected $callback;
 
@@ -46,6 +47,7 @@ class LocalizationMiddleware
         $this->setCookieName('locale');
         $this->setCookiePath('/');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
+        $this->setCookieEnabled(TRUE);
         $this->setCallback(function () { /* empty function */ });
     }
 
@@ -118,6 +120,14 @@ class LocalizationMiddleware
     }
 
     /**
+     * @param bool $enabled set the cookie or not
+     */
+    public function setCookieEnabled(bool $enabled)
+    {
+        $this->cookieEnabled = $enabled;
+    }
+
+    /**
      * @param callable $func callable to invoke when locale is determined
      */
     public function setCallback(callable $func)
@@ -135,10 +145,15 @@ class LocalizationMiddleware
         $this->callback->__invoke($locale);
 
         $req = $req->withAttribute($this->reqAttrName, $locale);
-        $resp = $resp->withHeader(
-            'Set-Cookie',
-            "{$this->cookieName}=$locale; Path={$this->cookiePath}; Expires={$this->cookieExpire}"
-        );
+
+        if ($this->cookieEnabled) {
+            $resp = $resp->withHeader(
+                'Set-Cookie',
+                "{$this->cookieName}=$locale" .
+                "; Path={$this->cookiePath}" .
+                "; Expires={$this->cookieExpire}"
+            );
+        }
 
         return $next($req, $resp);
     }
