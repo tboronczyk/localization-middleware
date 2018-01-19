@@ -10,6 +10,10 @@ make the value available to the rest of your application. Its callback hook
 offers a convenient way to initialize other libraries or execute code based on
 the locale value.
 
+## Installation
+
+    composer require boronczyk/localization-middleware
+
 ## Basic Example
 
     use Boronczyk\LocalizationMiddleware;
@@ -33,10 +37,10 @@ the locale value.
     $middleware = new LocalizationMiddleware($availableLocales, $defaultLocale);
 
     $middleware->setSearchOrder([
-        LocationMiddleware::FROM_URI_PATH,
-        LocationMiddleware::FROM_URI_PARAM,
-        LocationMiddleware::FROM_COOKIE,
-        LocationMiddleware::FROM_HEADER
+        LocalizationMiddleware::FROM_URI_PATH,
+        LocalizationMiddleware::FROM_URI_PARAM,
+        LocalizationMiddleware::FROM_COOKIE,
+        LocalizationMiddleware::FROM_HEADER
     ]);
     $middleware->setCallback(function (string $locale) {
         putenv("LANG=$locale");
@@ -78,10 +82,10 @@ methods:
     Sets the order in which inputs are searched for a suitable locale.
 
         $middleware->setSearchOrder([
-            LocationMiddleware::FROM_URI_PATH,
-            LocationMiddleware::FROM_URI_PARAM,
-            LocationMiddleware::FROM_COOKIE,
-            LocationMiddleware::FROM_HEADER
+            LocalizationMiddleware::FROM_URI_PATH,
+            LocalizationMiddleware::FROM_URI_PARAM,
+            LocalizationMiddleware::FROM_COOKIE,
+            LocalizationMiddleware::FROM_HEADER
         ]);
 
     Adding or removing locale sources from the order modifies the search
@@ -89,25 +93,25 @@ methods:
 
         // only search cookies and the Accept-Language header
         $middleware->setSearchOrder([
-            LocationMiddleware::FROM_COOKIE,
-            LocationMiddleware::FROM_HEADER
+            LocalizationMiddleware::FROM_COOKIE,
+            LocalizationMiddleware::FROM_HEADER
         ]);
 
     The available local source constants are:
 
-    * `LocationMiddleware::FROM_URI_PATH`  
+    * `LocalizationMiddleware::FROM_URI_PATH`  
       Search for the locale in the URI path. The first directory value in
-      the request path is considered the locale, for example 
+      the request path is considered the locale, for example
       `https://example.com/en_US/foo`.
 
-    * `LocationMiddleware::FROM_URI_PARAM`  
+    * `LocalizationMiddleware::FROM_URI_PARAM`  
       Search for the locale in the URI parameter (the default parameter name
       is `locale`).
 
-    * `LocationMiddleware::FROM_COOKIE`  
+    * `LocalizationMiddleware::FROM_COOKIE`  
       Search for the locale in cookies (the default cookie name is `locale`).
 
-    * `LocationMiddleware::FROM_HEADER`  
+    * `LocalizationMiddleware::FROM_HEADER`  
       Search for the local in the HTTP `Accept-Language` header. Header
       searches make a best-effort search for locales, languages, and possible
       quality modifiers.
@@ -153,7 +157,7 @@ methods:
 
   * `setCallback(callable $func)`  
     Sets a callback that is invoked after the middleware identifies the locale,
-    offering the developer a chance to conveniently initialize other libraries 
+    offering the developer a chance to conveniently initialize other libraries
     or execute other code with the value. The callable’s signature is:
     `function (string $locale)`.
 
