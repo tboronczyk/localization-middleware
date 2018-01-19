@@ -155,6 +155,11 @@ methods:
 
         $middleware->setCookieExpire(3600); // 1 hour
 
+  * `setCookieEnabled(bool $enabled)`  
+    Enable the locale cookie. The default value is TRUE.
+
+        $middleware->setCookieEnabled(FALSE); // Disabled
+
   * `setCallback(callable $func)`  
     Sets a callback that is invoked after the middleware identifies the locale,
     offering the developer a chance to conveniently initialize other libraries

@@ -123,6 +123,34 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertContains('lang=fr_CA', $resp->getHeaderLine('Set-Cookie'));
     }
 
+    public function testLocaleToCookieEnabled()
+    {
+        $req = self::createRequest([
+            'QUERY_STRING' => 'locale=fr_CA'
+        ]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PARAM]);
+        $lmw->setCookieEnabled(TRUE);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertTrue($resp->hasHeader('Set-Cookie'));
+    }
+
+    public function testLocaleToCookieDisabled()
+    {
+        $req = self::createRequest([
+            'QUERY_STRING' => 'locale=fr_CA'
+        ]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PARAM]);
+        $lmw->setCookieEnabled(FALSE);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertFalse($resp->hasHeader('Set-Cookie'));
+    }
+
     public function testCallback()
     {
         $req = self::createRequest([
