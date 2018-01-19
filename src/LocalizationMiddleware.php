@@ -218,7 +218,7 @@ class LocalizationMiddleware
         // return the locale if it is available
         foreach ($this->availableLocales as $avail) {
             if ($locale == $avail['locale']) {
-                return $avail['locale'];
+                return $locale;
             }
         }
         return '';
