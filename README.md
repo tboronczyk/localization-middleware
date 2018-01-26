@@ -110,6 +110,7 @@ methods:
 
     * `LocalizationMiddleware::FROM_COOKIE`  
       Search for the locale in cookies (the default cookie name is `locale`).
+      *Note: Using this will set a locale cookie for subsequent requests.*
 
     * `LocalizationMiddleware::FROM_HEADER`  
       Search for the local in the HTTP `Accept-Language` header. Header
