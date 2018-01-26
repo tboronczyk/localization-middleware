@@ -126,6 +126,20 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertContains('lang=fr_CA', $resp->getHeaderLine('Set-Cookie'));
     }
 
+    public function testCookieNotCreated()
+    {
+        $req = self::createRequest([
+            'QUERY_STRING' => 'locale=fr_CA'
+        ]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PARAM]);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertFalse($resp->hasHeader('Set-Cookie'));
+    }
+
+
     public function testCallback()
     {
         $req = self::createRequest([
