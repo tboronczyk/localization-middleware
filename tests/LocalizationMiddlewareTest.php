@@ -99,7 +99,10 @@ class LocalizationMiddlewareTest extends TestCase
         ]);
         $resp = self::createResponse();
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PARAM]);
+        $lmw->setSearchOrder([
+            LocalizationMiddleware::FROM_URI_PARAM,
+            LocalizationMiddleware::FROM_COOKIE
+        ]);
 
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertContains('locale=fr_CA', $resp->getHeaderLine('Set-Cookie'));

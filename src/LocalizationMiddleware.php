@@ -135,10 +135,13 @@ class LocalizationMiddleware
         $this->callback->__invoke($locale);
 
         $req = $req->withAttribute($this->reqAttrName, $locale);
-        $resp = $resp->withHeader(
-            'Set-Cookie',
-            "{$this->cookieName}=$locale; Path={$this->cookiePath}; Expires={$this->cookieExpire}"
-        );
+
+        if (in_array(self::FROM_COOKIE, $this->searchOrder)) {
+            $resp = $resp->withHeader(
+                'Set-Cookie',
+                "{$this->cookieName}=$locale; Path={$this->cookiePath}; Expires={$this->cookieExpire}"
+            );
+        }
 
         return $next($req, $resp);
     }
