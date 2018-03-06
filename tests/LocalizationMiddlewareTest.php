@@ -256,6 +256,20 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals('en_US', $req->getAttribute('locale'));
     }
 
+    public function testLocaleDefaultMissingHeader()
+    {
+        $env = Environment::mock();
+        unset($env['HTTP_ACCEPT_LANGUAGE']);
+
+        $req = Request::createFromEnvironment($env);
+        $resp = self::createResponse();
+
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('en_US', $req->getAttribute('locale'));
+    }
+
     public function testReqAttrName()
     {
         $req = self::createRequest([

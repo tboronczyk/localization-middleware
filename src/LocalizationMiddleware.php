@@ -198,7 +198,12 @@ class LocalizationMiddleware
 
     protected function localeFromHeader(Request $req): string
     {
-        $values = $this->parse($req->getHeaderLine('Accept-Language'));
+        $header = $req->getHeaderLine('Accept-Language');
+        if (empty($header)) {
+            return '';
+        }
+
+        $values = $this->parse($header);
         usort($values, [$this, 'sort']);
         foreach ($values as $value) {
             $value = $this->filterLocale($value['locale']);
