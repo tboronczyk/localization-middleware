@@ -42,7 +42,7 @@ the locale value.
         LocalizationMiddleware::FROM_COOKIE,
         LocalizationMiddleware::FROM_HEADER
     ]);
-    $middleware->setCallback(function (string $locale) {
+    $middleware->setLocaleCallback(function (string $locale) {
         putenv("LANG=$locale");
         setlocale(LC_ALL, $locale);
         bindtextdomain('messages', 'Locale');
@@ -157,12 +157,15 @@ methods:
         $middleware->setCookieExpire(3600); // 1 hour
 
   * `setCallback(callable $func)`  
+    Deprecated. Use `setLocaleCallback()` instead.
+
+  * `setLocaleCallback(callable $func)`  
     Sets a callback that is invoked after the middleware identifies the locale,
     offering the developer a chance to conveniently initialize other libraries
     or execute other code with the value. The callable’s signature is:
     `function (string $locale)`.
 
-        $middleware->setCallback(function (string $locale) {
+        $middleware->setLocaleCallback(function (string $locale) {
             putenv("LANG=$locale");
             setlocale(LC_ALL, $locale);
             bindtextdomain('messages', 'Locale');

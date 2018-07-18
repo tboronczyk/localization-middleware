@@ -28,7 +28,7 @@ class LocalizationMiddleware
     protected $cookiePath;
     protected $cookieExpire;
 
-    protected $callback;
+    protected $localeCallback;
 
     /**
      * @param array $locales a list of available locales
@@ -46,7 +46,7 @@ class LocalizationMiddleware
         $this->setCookieName('locale');
         $this->setCookiePath('/');
         $this->setCookieExpire(3600 * 24 * 30); // 30 days
-        $this->setCallback(function () { /* empty function */ });
+        $this->setLocaleCallback(function () { /* empty function */ });
     }
 
     /**
@@ -119,10 +119,20 @@ class LocalizationMiddleware
 
     /**
      * @param callable $func callable to invoke when locale is determined
+     * @deprecated
      */
     public function setCallback(callable $func)
     {
-        $this->callback = $func;
+        trigger_error('setCallback() is deprecated. Use setLocaleCallback() instead.', E_USER_DEPRECATED);
+        $this->setLocaleCallback($func);
+    }
+
+    /**
+     * @param callable $func callable to invoke when locale is determined
+     */
+    public function setLocaleCallback(callable $func)
+    {
+        $this->localeCallback = $func;
     }
 
     /**
@@ -132,7 +142,7 @@ class LocalizationMiddleware
     {
         $locale = $this->getLocale($req);
 
-        $this->callback->__invoke($locale);
+        $this->localeCallback->__invoke($locale);
 
         $req = $req->withAttribute($this->reqAttrName, $locale);
 

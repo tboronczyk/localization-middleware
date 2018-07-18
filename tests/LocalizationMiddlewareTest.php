@@ -5,6 +5,7 @@ error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
 use PHPUnit\Framework\TestCase;
+use PHPUnit\Framework\Error\Deprecated;
 
 use Slim\Http\Environment;
 use Slim\Http\Request;
@@ -139,8 +140,14 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertFalse($resp->hasHeader('Set-Cookie'));
     }
 
+    public function testCallbackDeprecated()
+    {
+        $this->expectException(Deprecated::class);
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setCallback(function (string $locale) { });
+    }
 
-    public function testCallback()
+    public function testLocaleCallback()
     {
         $req = self::createRequest([
             'REQUEST_URI' => '/fr_CA/foo/bar'
@@ -150,7 +157,7 @@ class LocalizationMiddlewareTest extends TestCase
         $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PATH]);
 
         $resolved = null;
-        $lmw->setCallback(function (string $locale) use (&$resolved) {
+        $lmw->setLocaleCallback(function (string $locale) use (&$resolved) {
             $resolved = $locale;
         });
 
