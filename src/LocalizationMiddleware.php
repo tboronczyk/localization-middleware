@@ -16,6 +16,7 @@ class LocalizationMiddleware
     const FROM_URI_PARAM = 2;
     const FROM_COOKIE = 3;
     const FROM_HEADER = 4;
+    const FROM_CALLBACK = 5;
 
     protected $availableLocales;
     protected $defaultLocale;
@@ -29,6 +30,7 @@ class LocalizationMiddleware
     protected $cookieExpire;
 
     protected $localeCallback;
+    protected $searchCallback;
 
     /**
      * @param array $locales a list of available locales
@@ -78,6 +80,14 @@ class LocalizationMiddleware
     }
 
     /**
+     * @param callable $func callable to invoke when searching the locale
+     */
+    public function setSearchCallback(callable $func)
+    {
+        $this->searchCallback = $func;
+    }
+
+    /**
      * @param string $name the name for the attribute attached to the request
      */
     public function setReqAttrName(string $name)
@@ -123,8 +133,8 @@ class LocalizationMiddleware
      */
     public function setCallback(callable $func)
     {
-        trigger_error('setCallback() is deprecated. Use setLocaleCallback() instead.', E_USER_DEPRECATED);
         $this->setLocaleCallback($func);
+        trigger_error('setCallback() is deprecated. Use setLocaleCallback() instead.', E_USER_DEPRECATED);
     }
 
     /**
@@ -176,6 +186,10 @@ class LocalizationMiddleware
                     $locale = $this->localeFromHeader($req);
                     break;
 
+                case self::FROM_CALLBACK:
+                    $locale = $this->localeFromCallback($req);
+                    break;
+
                 default:
                     throw new \DomainException('Unknown search option provided');
             }
@@ -204,6 +218,15 @@ class LocalizationMiddleware
         $cookies = $req->getCookieParams();
         $value = $cookies[$this->cookieName] ?? '';
         return $this->filterLocale($value);
+    }
+
+    protected function localeFromCallback(Request $req): string
+    {
+        if (!is_callable($this->searchCallback)) {
+            throw new \LogicException('Search callback not set');
+        }
+        $locale = $this->searchCallback->__invoke($req);
+        return $this->filterLocale($locale);
     }
 
     protected function localeFromHeader(Request $req): string

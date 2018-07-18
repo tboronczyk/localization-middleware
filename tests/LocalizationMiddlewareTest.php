@@ -76,6 +76,20 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals('fr_CA', $req->getAttribute('locale'));
     }
 
+    public function testLocaleFromSearchCallback()
+    {
+        $req = self::createRequest([]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_CALLBACK]);
+        $lmw->setSearchCallback(function (Request $req): string {
+            return 'fr_CA';
+        });
+
+        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+    }
+
     public function testLocaleFromCookie()
     {
         $req = self::createRequest([]);
@@ -316,7 +330,17 @@ class LocalizationMiddlewareTest extends TestCase
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
         $lmw->setSearchOrder([999]);
 
-        $this->expectException('DomainException');
+        $this->expectException(DomainException::class);
         $lmw->__invoke($req, $resp, self::callable());
     }
-}
+
+    public function testLocaleFromCallbackException()
+    {
+        $req = self::createRequest([]);
+        $resp = self::createResponse();
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $lmw->setSearchOrder([LocalizationMiddleware::FROM_CALLBACK]);
+
+        $this->expectException(LogicException::class);
+        $lmw->__invoke($req, $resp, self::callable());
+    }}

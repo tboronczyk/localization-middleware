@@ -37,11 +37,27 @@ the locale value.
     $middleware = new LocalizationMiddleware($availableLocales, $defaultLocale);
 
     $middleware->setSearchOrder([
+        LocalizationMiddleware::FROM_CALLBACK,
         LocalizationMiddleware::FROM_URI_PATH,
         LocalizationMiddleware::FROM_URI_PARAM,
         LocalizationMiddleware::FROM_COOKIE,
         LocalizationMiddleware::FROM_HEADER
     ]);
+    $middleware->setSearchCallback(
+        function (Request $req) use (Container $c): string {
+            $db = $c->get('GeoIp2Database');
+            switch ($db->country($req->getAttribute('ip_address')) {
+                case 'CA':
+                    return 'fr_CA';
+                case 'US':
+                    return 'en_US';
+                case 'MX':
+                    return 'es_MX';
+                default:
+                    return '';
+            }
+        }
+    );
     $middleware->setLocaleCallback(function (string $locale) {
         putenv("LANG=$locale");
         setlocale(LC_ALL, $locale);
@@ -97,7 +113,7 @@ methods:
             LocalizationMiddleware::FROM_HEADER
         ]);
 
-    The available local source constants are:
+    The available locale source constants are:
 
     * `LocalizationMiddleware::FROM_URI_PATH`  
       Search for the locale in the URI path. The first directory value in
@@ -113,12 +129,37 @@ methods:
       *Note: Using this will set a locale cookie for subsequent requests.*
 
     * `LocalizationMiddleware::FROM_HEADER`  
-      Search for the local in the HTTP `Accept-Language` header. Header
+      Search for the locale in the HTTP `Accept-Language` header. Header
       searches make a best-effort search for locales, languages, and possible
       quality modifiers.
 
+    * `LocalizationMiddleware::FROM_CALLBACK`  
+      Search for the locale using a custom callback function. The callback
+      function is set with `setSearchCallback()`.
+
     The default order is: `FROM_URI_PATH`, `FROM_URI_PARAM`, `FROM_COOKIE`,
-    `FROM_HEADER`.
+    `FROM_HEADER`. *Note `FROM_CALLBACK` is not included by default.*
+
+  * `setSearchCallback(callable $func)`  
+    Sets a callback that is invoked when searching for the locale, offering
+    the developer a chance to inject a locale of their choosing into the
+    search. The callable’s signature is: `function (Request $req): string`.
+
+        $middleware->setSearchCallback(
+            function (Request $req) use (Container $c): string {
+                $db = $c->get('GeoIp2Database');
+                switch ($db->country($req->getAttribute('ip_address')) {
+                    case 'CA':
+                        return 'fr_CA';
+                    case 'US':
+                        return 'en_US';
+                    case 'MX':
+                        return 'es_MX';
+                    default:
+                        return '';
+                }
+            }
+        );
 
   * `setReqAttrName(string $name)`  
     Sets the name for the attribute attached to the request. The default name
