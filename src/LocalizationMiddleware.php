@@ -18,7 +18,7 @@ class LocalizationMiddleware
     const FROM_HEADER = 4;
     const FROM_CALLBACK = 5;
 
-    protected $availableLocales;
+    protected $availableLocales = [];
     protected $defaultLocale;
 
     protected $searchOrder;
@@ -56,7 +56,6 @@ class LocalizationMiddleware
      */
     public function setAvailableLocales(array $locales)
     {
-        $this->availableLocales = [];
         foreach ($locales as $locale) {
             $this->availableLocales[] = $this->parseLocale($locale);
         }
@@ -318,6 +317,22 @@ class LocalizationMiddleware
         // See https://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.4
         @list(, $value) = explode('=', $quality, 2);
         return (float)($value ?: 1.0);
+    }
+
+    /**
+     * @return array
+     */
+    public function getAvailableLocales(): array
+    {
+        return $this->availableLocales;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDefaultLocale()
+    {
+        return $this->defaultLocale;
     }
 
     protected function sort(array $a, array $b): int
