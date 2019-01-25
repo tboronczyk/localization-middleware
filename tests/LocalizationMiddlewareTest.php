@@ -30,7 +30,8 @@ class LocalizationMiddlewareTest extends TestCase
         return new Response;
     }
 
-    protected static function callable() {
+    protected static function callable()
+    {
         return function (Request $req, Response $res) {
             return [$req, $res];
         };
@@ -158,7 +159,8 @@ class LocalizationMiddlewareTest extends TestCase
     {
         $this->expectException(Deprecated::class);
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setCallback(function (string $locale) { });
+        $lmw->setCallback(function (string $locale) {
+        });
     }
 
     public function testLocaleCallback()
@@ -343,4 +345,23 @@ class LocalizationMiddlewareTest extends TestCase
 
         $this->expectException(LogicException::class);
         $lmw->__invoke($req, $resp, self::callable());
-    }}
+    }
+
+    public function testGetDefaultLocale()
+    {
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $this->assertEquals(self::$defaultLocale, $lmw->getDefaultLocale());
+    }
+
+    public function testGetAvailableLocales()
+    {
+        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
+        $this->assertEquals([
+            ['locale' => 'en_US', 'language' => 'en'],
+            ['locale' => 'fr_CA', 'language' => 'fr'],
+            ['locale' => 'es_MX', 'language' => 'es'],
+            ['locale' => 'eo', 'language' => 'eo'],
+        ], $lmw->getAvailableLocales());
+    }
+
+}
