@@ -21,5 +21,8 @@
   },
   "autoload": {
     "psr-4": { "Boronczyk\\": "src/" }
+  },
+  "autoload-dev": {
+    "psr-4": { "Boronczyk\\Tests\\": "tests/" }
   }
 }

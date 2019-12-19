@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+namespace Boronczyk\Tests;
+
 error_reporting(E_ALL);
 ini_set('display_errors', '1');
 
@@ -11,9 +13,6 @@ use Slim\Http\Environment;
 use Slim\Http\Request;
 use Slim\Http\Response;
 use Boronczyk\LocalizationMiddleware;
-
-chdir(dirname(__FILE__));
-require_once '../vendor/autoload.php';
 
 class LocalizationMiddlewareTest extends TestCase
 {
@@ -95,7 +94,7 @@ class LocalizationMiddlewareTest extends TestCase
         $req = self::createRequest([]);
         $resp = self::createResponse();
 
-        $ref = new ReflectionClass($req);
+        $ref = new \ReflectionClass($req);
         $prop = $ref->getProperty('cookies');
         $prop->setAccessible(true);
         $prop->setValue($req, ['locale' => 'fr_CA']);
@@ -128,7 +127,7 @@ class LocalizationMiddlewareTest extends TestCase
         $req = self::createRequest([]);
         $resp = self::createResponse();
 
-        $ref = new ReflectionClass($req);
+        $ref = new \ReflectionClass($req);
         $prop = $ref->getProperty('cookies');
         $prop->setAccessible(true);
         $prop->setValue($req, ['lang' => 'fr_CA']);
@@ -179,17 +178,28 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals('fr_CA', $resolved);
     }
 
-    public function testLocaleFromHeader()
+    /**
+     * @dataProvider localeFromHeaderDataProvided
+     */
+    public function testLocaleFromHeader(string $header, string $expectedResult)
     {
         $req = self::createRequest([
-            'HTTP_ACCEPT_LANGUAGE' => 'fr_CA'
+            'HTTP_ACCEPT_LANGUAGE' => $header
         ]);
         $resp = self::createResponse();
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
         $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
         list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $this->assertEquals($expectedResult, $req->getAttribute('locale'));
+    }
+
+    public function localeFromHeaderDataProvided(): array
+    {
+        return [
+            ['fr_CA', 'fr_CA'],
+            ['en, *;q=0.7', self::$defaultLocale]
+        ];
     }
 
     public function testLocaleFromHeaderQuality()
@@ -266,7 +276,7 @@ class LocalizationMiddlewareTest extends TestCase
         ]);
         $resp = self::createResponse();
 
-        $ref = new ReflectionClass($req);
+        $ref = new \ReflectionClass($req);
         $prop = $ref->getProperty('cookies');
         $prop->setAccessible(true);
         $prop->setValue($req, ['locale' => 'pt_BR']);
@@ -330,7 +340,7 @@ class LocalizationMiddlewareTest extends TestCase
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
         $lmw->setSearchOrder([999]);
 
-        $this->expectException(DomainException::class);
+        $this->expectException(\DomainException::class);
         $lmw->__invoke($req, $resp, self::callable());
     }
 
@@ -341,6 +351,6 @@ class LocalizationMiddlewareTest extends TestCase
         $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
         $lmw->setSearchOrder([LocalizationMiddleware::FROM_CALLBACK]);
 
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $lmw->__invoke($req, $resp, self::callable());
     }}
