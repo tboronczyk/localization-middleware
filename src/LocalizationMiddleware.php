@@ -157,7 +157,7 @@ class LocalizationMiddleware
         $req = $req->withAttribute($this->reqAttrName, $locale);
 
         if (in_array(self::FROM_COOKIE, $this->searchOrder)) {
-            $resp = $resp->withHeader(
+            $resp = $resp->withAddedHeader(
                 'Set-Cookie',
                 "{$this->cookieName}=$locale; Path={$this->cookiePath}; Expires={$this->cookieExpire}"
             );
