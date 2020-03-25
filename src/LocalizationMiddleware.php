@@ -272,7 +272,7 @@ class LocalizationMiddleware
         $values = [];
         foreach (explode(',', $header) as $lang) {
             @list($locale, $quality) = explode(';', $lang, 2);
-            $val = $this->parseLocale($locale);
+            $val = $this->parseLocale(str_replace('*', $this->defaultLocale, $locale));
             $val['quality'] = $this->parseQuality($quality ?? '');
             $values[] = $val;
         }
