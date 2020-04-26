@@ -1,8 +1,8 @@
 {
   "name": "boronczyk/localization-middleware",
   "type": "library",
-  "description": "PSR-7 middleware to assist primarily with language-based content negotiation and various other localization tasks.",
-  "keywords": ["PSR-7", "Slim", "Localization"],
+  "description": "PSR-15 middleware to assist primarily with language-based content negotiation and various other localization tasks.",
+  "keywords": ["PSR-15", "Slim", "Localization"],
   "homepage": "https://github.com/tboronczyk/localization-middleware",
   "license": "MIT",
   "authors": [
@@ -13,11 +13,12 @@
   ],
   "require": {
     "php": "^7.0",
-    "psr/http-message": "^1.0"
+    "psr/http-message": "^1.0",
+    "psr/http-server-middleware": "^1.0"
   },
   "require-dev": {
     "phpunit/phpunit": "^6.0",
-    "slim/slim": "^3.0"
+    "slim/psr7": "^1.0"
   },
   "autoload": {
     "psr-4": { "Boronczyk\\": "src/" }

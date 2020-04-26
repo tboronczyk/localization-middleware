@@ -3,14 +3,16 @@ declare(strict_types=1);
 
 namespace Boronczyk;
 
-use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Server\MiddlewareInterface;
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Psr\Http\Message\ResponseInterface as Response;
+use Psr\Http\Message\ServerRequestInterface as Request;
 
 /**
  * Middleware to assist primarily with language-based content negotiation
  * and various other localization tasks
  */
-class LocalizationMiddleware
+class LocalizationMiddleware implements MiddlewareInterface
 {
     const FROM_URI_PATH = 1;
     const FROM_URI_PARAM = 2;
@@ -40,9 +42,12 @@ class LocalizationMiddleware
     {
         $this->setAvailableLocales($locales);
         $this->setDefaultLocale($default);
-        $this->setSearchOrder(
-            [self::FROM_URI_PATH, self::FROM_URI_PARAM, self::FROM_COOKIE, self::FROM_HEADER]
-        );
+        $this->setSearchOrder([
+            self::FROM_URI_PATH,
+            self::FROM_URI_PARAM,
+            self::FROM_COOKIE,
+            self::FROM_HEADER
+        ]);
         $this->setReqAttrName('locale');
         $this->setUriParamName('locale');
         $this->setCookieName('locale');
@@ -129,16 +134,6 @@ class LocalizationMiddleware
 
     /**
      * @param callable $func callable to invoke when locale is determined
-     * @deprecated
-     */
-    public function setCallback(callable $func)
-    {
-        $this->setLocaleCallback($func);
-        trigger_error('setCallback() is deprecated. Use setLocaleCallback() instead.', E_USER_DEPRECATED);
-    }
-
-    /**
-     * @param callable $func callable to invoke when locale is determined
      */
     public function setLocaleCallback(callable $func)
     {
@@ -146,9 +141,9 @@ class LocalizationMiddleware
     }
 
     /**
-     * Add the locale to the environment, request and response objects
+     * Add the locale to the request and response objects
      */
-    public function __invoke(Request $req, Response $resp, callable $next)
+    public function process(Request $req, RequestHandler $handler): Response
     {
         $locale = $this->getLocale($req);
 
@@ -156,14 +151,15 @@ class LocalizationMiddleware
 
         $req = $req->withAttribute($this->reqAttrName, $locale);
 
+        $resp = $handler->handle($req);
+
         if (in_array(self::FROM_COOKIE, $this->searchOrder)) {
             $resp = $resp->withAddedHeader(
                 'Set-Cookie',
                 "{$this->cookieName}=$locale; Path={$this->cookiePath}; Expires={$this->cookieExpire}"
             );
         }
-
-        return $next($req, $resp);
+        return $resp;
     }
 
     protected function getLocale(Request $req)

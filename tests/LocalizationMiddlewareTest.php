@@ -9,9 +9,13 @@ ini_set('display_errors', '1');
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Error\Deprecated;
 
-use Slim\Http\Environment;
-use Slim\Http\Request;
-use Slim\Http\Response;
+use Slim\Psr7\Factory\ServerRequestFactory;
+use Psr\Http\Message\ServerRequestInterface as Request;
+
+use Slim\Psr7\Factory\ResponseFactory;
+use Psr\Http\Message\ResponseInterface as Response;
+
+use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 use Boronczyk\LocalizationMiddleware;
 
 class LocalizationMiddlewareTest extends TestCase
@@ -19,162 +23,182 @@ class LocalizationMiddlewareTest extends TestCase
     protected static $availableLocales = ['en_US', 'fr_CA', 'es_MX', 'eo'];
     protected static $defaultLocale = 'en_US';
 
-    protected static function createRequest(array $env)
+    protected static function createMiddleware(): LocalizationMiddleware
     {
-        return Request::createFromEnvironment(Environment::mock($env));
+        return new LocalizationMiddleware(
+            self::$availableLocales,
+            self::$defaultLocale
+        );
     }
 
-    protected static function createResponse()
+    protected static function createRequest(string $uri): Request
     {
-        return new Response;
+        $factory = new ServerRequestFactory;
+        return $factory->createServerRequest('GET', $uri);
     }
 
-    protected static function callable() {
-        return function (Request $req, Response $res) {
-            return [$req, $res];
+    protected static function createResponse(): Response
+    {
+        $factory = new ResponseFactory;
+        return $factory->createResponse();
+    }
+
+    protected static function createHandler(): RequestHandler
+    {
+        return new class (self::createResponse()) implements RequestHandler
+        {
+            public $req;
+            public $resp;
+            
+            public function __construct(Response $resp)
+            {
+                $this->resp = $resp;
+            }
+
+            public function handle(Request $req): Response
+            {
+                $this->req = $req;
+                return $this->resp;
+            }
         };
     }
 
     public function testLocaleFromUriPath()
     {
-        $req = self::createRequest([
-            'REQUEST_URI' => '/fr_CA/foo/bar'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_URI_PATH
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PATH]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $req = self::createRequest('/fr_CA/foo/bar');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleFromUriParam()
     {
-        $req = self::createRequest([
-            'QUERY_STRING' => 'locale=fr_CA'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_URI_PARAM
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PARAM]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $req = self::createRequest('/?locale=fr_CA');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testUriParamName()
     {
-        $req = self::createRequest([
-            'QUERY_STRING' => 'lang=fr_CA'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_URI_PARAM
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PARAM]);
-        $lmw->setUriParamName('lang');
+        $mw->setUriParamName('lang');
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $req = self::createRequest('/?lang=fr_CA');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleFromSearchCallback()
     {
-        $req = self::createRequest([]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_CALLBACK]);
-        $lmw->setSearchCallback(function (Request $req): string {
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_CALLBACK
+        ]);
+        $mw->setSearchCallback(function (Request $req): string {
             return 'fr_CA';
         });
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $req = self::createRequest('/');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleFromCookie()
     {
-        $req = self::createRequest([]);
-        $resp = self::createResponse();
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_COOKIE
+        ]);
 
-        $ref = new \ReflectionClass($req);
-        $prop = $ref->getProperty('cookies');
-        $prop->setAccessible(true);
-        $prop->setValue($req, ['locale' => 'fr_CA']);
+        $req = self::createRequest('/')
+            ->withCookieParams(['locale' => 'fr_CA']);
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
 
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_COOKIE]);
-
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleToCookie()
     {
-        $req = self::createRequest([
-            'QUERY_STRING' => 'locale=fr_CA'
-        ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
             LocalizationMiddleware::FROM_URI_PARAM,
             LocalizationMiddleware::FROM_COOKIE
         ]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $req = self::createRequest('/?locale=fr_CA');
+        $handler = self::createHandler();
+        $resp = $mw->process($req, $handler);
+
         $this->assertContains('locale=fr_CA', $resp->getHeaderLine('Set-Cookie'));
     }
 
     public function testLocaleCookieName()
     {
-        $req = self::createRequest([]);
-        $resp = self::createResponse();
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_COOKIE
+        ]);
+        $mw->setCookieName('lang');
 
-        $ref = new \ReflectionClass($req);
-        $prop = $ref->getProperty('cookies');
-        $prop->setAccessible(true);
-        $prop->setValue($req, ['lang' => 'fr_CA']);
+        $req = self::createRequest('/')
+            ->withCookieParams(['lang' => 'fr_CA']);
+        $handler = self::createHandler();
+        $resp = $mw->process($req, $handler);
 
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_COOKIE]);
-        $lmw->setCookieName('lang');
-
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
         $this->assertContains('lang=fr_CA', $resp->getHeaderLine('Set-Cookie'));
     }
 
     public function testCookieNotCreated()
     {
-        $req = self::createRequest([
-            'QUERY_STRING' => 'locale=fr_CA'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_URI_PARAM
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PARAM]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
+        $req = self::createRequest('/?locale=fr_CA');
+        $handler = self::createHandler();
+        $resp = $mw->process($req, $handler);
+
         $this->assertFalse($resp->hasHeader('Set-Cookie'));
-    }
-
-    public function testCallbackDeprecated()
-    {
-        $this->expectException(Deprecated::class);
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setCallback(function (string $locale) { });
     }
 
     public function testLocaleCallback()
     {
-        $req = self::createRequest([
-            'REQUEST_URI' => '/fr_CA/foo/bar'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_URI_PATH
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_URI_PATH]);
 
         $resolved = null;
-        $lmw->setLocaleCallback(function (string $locale) use (&$resolved) {
+        $mw->setLocaleCallback(function (string $locale) use (&$resolved) {
             $resolved = $locale;
         });
 
-        $lmw->__invoke($req, $resp, self::callable());
+        $req = self::createRequest('/fr_CA/foo/bar');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
         $this->assertEquals('fr_CA', $resolved);
     }
 
@@ -183,20 +207,23 @@ class LocalizationMiddlewareTest extends TestCase
      */
     public function testLocaleFromHeader(string $header, string $expectedResult)
     {
-        $req = self::createRequest([
-            'HTTP_ACCEPT_LANGUAGE' => $header
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_HEADER
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals($expectedResult, $req->getAttribute('locale'));
+        $req = self::createRequest('/')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', $header);
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals($expectedResult, $handler->req->getAttribute('locale'));
     }
 
     public function localeFromHeaderDataProvided(): array
     {
         return [
+            // header value, expected value
             ['fr_CA', 'fr_CA'],
             ['en, *;q=0.7', self::$defaultLocale]
         ];
@@ -204,153 +231,156 @@ class LocalizationMiddlewareTest extends TestCase
 
     public function testLocaleFromHeaderQuality()
     {
-        $req = self::createRequest([
-            'HTTP_ACCEPT_LANGUAGE' => 'fr_CA,es_MX;q=0.8'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_HEADER
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $req = self::createRequest('/')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', 'fr_CA,es_MX;q=0.8');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleFromHeaderQualitySorted()
     {
-        $req = self::createRequest([
-            'HTTP_ACCEPT_LANGUAGE' => 'fr_CA;q=0.7,en_US;q=0.2,es_MX;q=0.8'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_HEADER
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('es_MX', $req->getAttribute('locale'));
+        $req = self::createRequest('/')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', 'fr_CA;q=0.7,en_US;q=0.2,es_MX;q=0.8');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('es_MX', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleFromHeaderQualitySortedDefault()
     {
-        $req = self::createRequest([
-            'HTTP_ACCEPT_LANGUAGE' => 'en_US;q=0.2,fr_CA,es_MX;q=0.8'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_HEADER
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $req = self::createRequest('/')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', 'en_US;q=0.2,fr_CA,es_MX;q=0.8');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleFromHeaderQualitySame()
     {
-        $req = self::createRequest([
-            'HTTP_ACCEPT_LANGUAGE' => 'fr_CA;q=0.8,es_MX;q=0.8'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_HEADER
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('locale'));
+        $req = self::createRequest('/')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', 'fr_CA;q=0.8,es_MX;q=0.8');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleLanguageDowngrade()
     {
-        $req = self::createRequest([
-            'HTTP_ACCEPT_LANGUAGE' => 'en,eo_XX'
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_HEADER
         ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_HEADER]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('eo', $req->getAttribute('locale'));
+        $req = self::createRequest('/')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', 'en,eo_XX');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('eo', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleDefault()
     {
-        $req = self::createRequest([
-            'REQUEST_URI' => '/pt_BR/foo/bar',
-            'QUERY_STRING' => 'locale=pt_BR',
-            'HTTP_ACCEPT_LANGUAGE' => 'pt_BR'
-        ]);
-        $resp = self::createResponse();
+        $mw = self::createMiddleware();
 
-        $ref = new \ReflectionClass($req);
-        $prop = $ref->getProperty('cookies');
-        $prop->setAccessible(true);
-        $prop->setValue($req, ['locale' => 'pt_BR']);
+        $req = self::createRequest('/pt_BR/foo/bar?locale=pt_BR')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', 'pt_BR')
+            ->withCookieParams(['locale' => 'pt_BR']);
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
 
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('en_US', $req->getAttribute('locale'));
+        $this->assertEquals('en_US', $handler->req->getAttribute('locale'));
     }
 
     public function testLocaleDefaultMissingHeader()
     {
-        $env = Environment::mock();
-        unset($env['HTTP_ACCEPT_LANGUAGE']);
+        $mw = self::createMiddleware();
 
-        $req = Request::createFromEnvironment($env);
-        $resp = self::createResponse();
+        $req = self::createRequest('/')
+            ->withoutHeader('HTTP_ACCEPT_LANGUAGE');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
 
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('en_US', $req->getAttribute('locale'));
+        $this->assertEquals('en_US', $handler->req->getAttribute('locale'));
     }
 
     public function testReqAttrName()
     {
-        $req = self::createRequest([
-            'QUERY_STRING' => 'locale=fr_CA'
-        ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setReqAttrName('lang');
+        $mw = self::createMiddleware();
+        $mw->setReqAttrName('lang');
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('fr_CA', $req->getAttribute('lang'));
+        $req = self::createRequest('/?locale=fr_CA');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('fr_CA', $handler->req->getAttribute('lang'));
     }
 
     public function testSearchOrder()
     {
-        $req = self::createRequest([
-            'REQUEST_URI' => '/pt_BR/foo/bar',
-            'QUERY_STRING' => 'locale=fr_CA',
-            'HTTP_ACCEPT_LANGUAGE' => 'es_MX'
-        ]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
             LocalizationMiddleware::FROM_URI_PATH,
             LocalizationMiddleware::FROM_HEADER,
             LocalizationMiddleware::FROM_URI_PARAM
         ]);
 
-        list($req, $resp) = $lmw->__invoke($req, $resp, self::callable());
-        $this->assertEquals('es_MX', $req->getAttribute('locale'));
+        $req = self::createRequest('/pt_BR/foo/bar?locale=fr_CA')
+            ->withAddedHeader('HTTP_ACCEPT_LANGUAGE', 'es_MX');
+        $handler = self::createHandler();
+        $mw->process($req, $handler);
+
+        $this->assertEquals('es_MX', $handler->req->getAttribute('locale'));
     }
 
     public function testSearchOrderException()
     {
-        $req = self::createRequest([]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([999]);
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([999]);
+
+        $req = self::createRequest('/');
+        $handler = self::createHandler();
 
         $this->expectException(\DomainException::class);
-        $lmw->__invoke($req, $resp, self::callable());
+        $mw->process($req, $handler);
     }
 
     public function testLocaleFromCallbackException()
     {
-        $req = self::createRequest([]);
-        $resp = self::createResponse();
-        $lmw = new LocalizationMiddleware(self::$availableLocales, self::$defaultLocale);
-        $lmw->setSearchOrder([LocalizationMiddleware::FROM_CALLBACK]);
+        $mw = self::createMiddleware();
+        $mw->setSearchOrder([
+            LocalizationMiddleware::FROM_CALLBACK
+        ]);
+
+        $req = self::createRequest('/');
+        $handler = self::createHandler();
 
         $this->expectException(\LogicException::class);
-        $lmw->__invoke($req, $resp, self::callable());
-    }}
+        $mw->process($req, $handler);
+    }
+}
