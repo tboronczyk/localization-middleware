@@ -1,7 +1,7 @@
 dist: trusty
 language: php
 php:
-  - 7.0
+  - 7.2
 addons:
   sonarqube:
     organization: "tboronczyk-github"
