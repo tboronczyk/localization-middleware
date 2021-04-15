@@ -1,15 +1,15 @@
 version: 2
 jobs:
   build:
-    working_directory: /var/www/html
+    working_directory: /app
     docker:
-            - image: php:7.4-fpm
+      - image: php:7.4-apache
         environment:
           APP_ENV: test
     steps:
       - run:
           name: Install system packages
-          command: apt-get update && apt-get -y install git
+          command: apt-get update && apt-get -y install git unzip
       - checkout
       - run:
           name: Install Composer
