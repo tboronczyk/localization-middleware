@@ -1,6 +1,7 @@
 # Localization Middleware
 
-[![Build Status](https://travis-ci.org/tboronczyk/localization-middleware.svg?branch=master)](https://travis-ci.org/tboronczyk/localization-middleware) [![codecov](https://codecov.io/gh/tboronczyk/localization-middleware/branch/master/graph/badge.svg)](https://codecov.io/gh/tboronczyk/localization-middleware)
+[![tboronczyk](https://circleci.com/gh/tboronczyk/localization-middleware.svg?style=shield)](https://circleci.com/gh/tboronczyk/localization-middleware)
+[![codecov](https://codecov.io/gh/tboronczyk/localization-middleware/branch/master/graph/badge.svg)](https://codecov.io/gh/tboronczyk/localization-middleware)
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Ftboronczyk%2Flocalization-middleware.svg?type=shield)](https://app.fossa.io/projects/git%2Bhttps%3A%2F%2Fgithub.com%2Ftboronczyk%2Flocalization-middleware?ref=badge_shield)
 
 Middleware to assist primarily with language-based content negotiation and 
