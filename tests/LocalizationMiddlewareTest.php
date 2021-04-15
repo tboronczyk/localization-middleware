@@ -150,7 +150,7 @@ class LocalizationMiddlewareTest extends TestCase
         $handler = self::createHandler();
         $resp = $mw->process($req, $handler);
 
-        $this->assertContains('locale=fr_CA', $resp->getHeaderLine('Set-Cookie'));
+        $this->assertStringContainsString('locale=fr_CA', $resp->getHeaderLine('Set-Cookie'));
     }
 
     public function testLocaleCookieName()
@@ -166,7 +166,7 @@ class LocalizationMiddlewareTest extends TestCase
         $handler = self::createHandler();
         $resp = $mw->process($req, $handler);
 
-        $this->assertContains('lang=fr_CA', $resp->getHeaderLine('Set-Cookie'));
+        $this->assertStringContainsString('lang=fr_CA', $resp->getHeaderLine('Set-Cookie'));
     }
 
     public function testCookieNotCreated()
