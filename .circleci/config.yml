@@ -35,6 +35,8 @@ jobs:
           command: php composer.phar install
       - run:
           name: Run Unit tests
-          command: php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-xml /app/coverage.xml
+          command: php -d xdebug.mode=coverage vendor/bin/phpunit --coverage-clover /tmp/coverage.xml
+      - store_test_results:
+          path: /tmp
       - codecov/upload:
-          file: /app/coverage.xml
+          file: /tmp/coverage.xml
