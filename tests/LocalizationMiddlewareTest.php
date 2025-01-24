@@ -220,7 +220,7 @@ class LocalizationMiddlewareTest extends TestCase
         $this->assertEquals($expectedResult, $handler->req->getAttribute('locale'));
     }
 
-    public function localeFromHeaderDataProvided(): array
+    public static function localeFromHeaderDataProvided(): array
     {
         return [
             // header value, expected value
